@@ -1,6 +1,7 @@
 #ifndef AsmCode_h
 
     #define AsmCode_h
+    #include <stdio.h>
     #include <iostream>
     #include <string>
     #include <vector>
@@ -12,6 +13,7 @@
     using std::string;
     using std::vector;
     using std::ifstream;
+    using std::ofstream;
 
     class AsmCode
     {
@@ -35,6 +37,7 @@
         void clearSourceCode();
         void setSourceCode(const vector<string>&);
         void read(const string&);
+        bool writeLc(string) const;
 
     private:
         // Variable.

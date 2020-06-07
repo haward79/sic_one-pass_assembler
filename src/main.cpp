@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <iostream>
 #include <string>
 #include "AsmCode.h"
@@ -27,18 +26,16 @@ int main(int countArg, char** args)
     AsmCode* code = new AsmCode;
 
     // Read source code.
+    cout << "> Parsing source code ...\n";
     code->read(string(arguments[0]) + ".asm");
+    cout << "  Parsing source code ... Done\n\n";
 
-    // Print lc.
-    for(int i=0, sizeI=code->getLineBasedTokenLength(); i<sizeI; ++i)
-    {
-        if(code->getLc(i) >= 0)
-            printf("[%2d]  %s  %4d\t%s\n", i, Number::decimalToHex(code->getLc(i), 5).c_str(), code->getLc(i), code->getSourceCode()[i].c_str());
-        else
-            printf("[%2d]  %s  %s\t%s\n", i, "     ", "    ", code->getSourceCode()[i].c_str());
-    }
-
-    cout << "\n";
+    // Write lc to file.
+    cout << "> Writing location counter values to file ...\n";
+    if(code->writeLc(arguments[0] + ".lst"))
+        cout << "  Writing location counter values to file ... Done\n";
+    else
+        cout << "  Writing location counter values to file ... Failed\n\n";
 
     // Release object.
     delete code;

@@ -241,6 +241,42 @@ void AsmCode::read(const string& filePath)
     generateLc();
 }
 
+bool AsmCode::writeLc(const string filePath) const
+{
+    ofstream fout;
+
+    // Open output file stream.
+    fout.open(filePath);
+
+    // Failure.
+    if(fout.fail())
+        return false;
+    // Success.
+    else
+    {
+        // Write title.
+        fout << "Loc.\tSource statement\n";
+        fout << "=====\t==================================\n";
+
+        // Write content.
+        for(int i=0, sizeI=getLineBasedTokenLength(); i<sizeI; ++i)
+        {
+            if(getLc(i) >= 0)
+                fout << Number::decimalToHex(getLc(i), 5).c_str() << "\t" << getSourceCode()[i].c_str() << "\n";
+            else
+            {
+                if(getSourceCode()[i][0] == '.')
+                    fout << "\t" << getSourceCode()[i].c_str() << "\n";
+                else
+                    fout << "     \t" << getSourceCode()[i].c_str() << "\n";
+            }
+        }
+
+        // Close output file stream.
+        fout.close();
+    }
+}
+
 
 
 /*******************************
