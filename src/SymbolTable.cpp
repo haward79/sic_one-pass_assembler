@@ -9,35 +9,50 @@ SymbolTable::SymbolTable()
     clear();
 }
 
-int SymbolTable::getAddress(string name) const
+string SymbolTable::getAddress(string name) const
 {
     int index = getNameIndex(name);
 
     if(index != -1)
         return address[index];
     else
-        return -1;
+        return "";
 }
 
-vector<int>* SymbolTable::getReferences(string name) const
+int SymbolTable::getReferenceSize(string name) const
 {
     int index = getNameIndex(name);
 
     if(index != -1)
-        return new vector<int>(*reference[index]);
+        return reference[index]->size();
     else
-        return nullptr;
+        return -1;
+}
+
+string SymbolTable::getReference(string name, int index) const
+{
+    int nameIndex = getNameIndex(name);
+
+    if(nameIndex != -1)
+    {
+        if(index >= 0 && index < reference[nameIndex]->size())
+            return reference[nameIndex]->at(index);
+        else
+            return "";
+    }
+    else
+        return "";
 }
 
 bool SymbolTable::addSymbol(string name)
 {
-    if(isNameExists(name))
+    if(isSymbolExists(name))
         return false;
     else
     {
         this->name.push_back(name);
-        address.push_back(-1);
-        reference.push_back(new vector<int>);
+        address.push_back("");
+        reference.push_back(new vector<string>);
         reference[reference.size()-1]->clear();
 
         return true;
@@ -61,7 +76,7 @@ bool SymbolTable::removeSymbol(string name)
         return false;
 }
 
-bool SymbolTable::setAddress(string name, int address)
+bool SymbolTable::setAddress(string name, string address)
 {
     int index = getNameIndex(name);
 
@@ -74,28 +89,42 @@ bool SymbolTable::setAddress(string name, int address)
         return false;
 }
 
-bool SymbolTable::addReference(string name, int reference)
+bool SymbolTable::addReference(string name, string reference)
 {
-    if(isNameExists(name))
+    int nameIndex = getNameIndex(name);
+
+    if(nameIndex != -1)
     {
-        this->reference[getNameIndex(name)]->push_back(reference);
+        // Check duplication.
+        for(int i=0, sizeI=this->reference[nameIndex]->size(); i<sizeI; ++i)
+        {
+            if(this->reference[nameIndex]->at(i) == reference)
+                return false;
+        }
+
+        this->reference[nameIndex]->push_back(reference);
         return true;
     }
     else
         return false;
 }
 
-bool SymbolTable::removeReference(string name, int reference)
+bool SymbolTable::removeReference(string name, string reference)
 {
-    int index = getNameIndex(name);
+    int nameIndex = getNameIndex(name);
 
-    if(index != -1)
+    if(nameIndex != -1)
     {
-        for(int i=0, sizeI=this->reference[index]->size(); i<sizeI; ++i)
+        for(int i=0, sizeI=this->reference[nameIndex]->size(); i<sizeI; ++i)
         {
-            if(this->reference[index]->at(i) == reference)
+            if(this->reference[nameIndex]->at(i) == reference)
             {
-                this->reference[index]->erase(this->reference[index]->begin() + i);
+                this->reference[nameIndex]->erase(this->reference[nameIndex]->begin() + i);
+
+                // No reference remaining. Remove symbol.
+                if(i == 0 && this->reference[nameIndex]->size() == 0)
+                    removeSymbol(name);
+
                 return true;
             }
         }
@@ -108,12 +137,11 @@ bool SymbolTable::removeReference(string name, int reference)
 
 void SymbolTable::clear()
 {
-    name.clear();
-    address.clear();
-    reference.clear();
+    for(int i=0, sizeI=name.size(); i<sizeI; ++i)
+        removeSymbol(name[i]);
 }
 
-bool SymbolTable::isNameExists(string name) const
+bool SymbolTable::isSymbolExists(string name) const
 {
     for(int i=0, sizeI=this->name.size(); i<sizeI; ++i)
     {
@@ -124,7 +152,7 @@ bool SymbolTable::isNameExists(string name) const
     return false;
 }
 
-int SymbolTable::clearSymbolWithEmptyReference()
+int SymbolTable::clearSymbolWithNoReference()
 {
     int count = 0;
 

@@ -132,6 +132,21 @@ AsmCode::AsmCode()
     clearSourceCode();
 }
 
+// Destructor.
+AsmCode::~AsmCode()
+{
+    for(int i=0, sizeI=lineBasedTokens.size(); i<sizeI; ++i)
+    {
+        if(lineBasedTokens[i] != nullptr)
+        {
+            delete lineBasedTokens[i];
+            lineBasedTokens[i] = nullptr;
+        }
+    }
+
+    lineBasedTokens.clear();
+}
+
 // Methods.
 const string AsmCode::getToken(int index) const
 {
@@ -161,6 +176,14 @@ const string AsmCode::getLineBasedToken(int line, int index) const
         return (*lineBasedTokens[line])[index];
     else
         return "";
+}
+
+const int AsmCode::getLc(int index) const
+{
+    if(index >= 0 && index < lc.size())
+        return lc[index];
+    else
+        return 0;
 }
 
 void AsmCode::clearSourceCode()
@@ -212,6 +235,7 @@ void AsmCode::read(const string& filePath)
 
     // Close file stream.
     fin.close();
+    delete &fin;
 
     splitTokens();
     generateLc();
@@ -260,7 +284,7 @@ void AsmCode::splitTokens()
 
 void AsmCode::generateLc()
 {
-    int lcTmp = 0;
+    int lcTmp = -999999999;
     string opcode = "";
     bool directive = false;
     SymbolTable symbols;
@@ -282,35 +306,27 @@ void AsmCode::generateLc()
                 lc.push_back(lcTmp);
                 lcTmp += 3;
 
-                // Handle operands.
+                // Handle operands as value or symbol.
             }
-            // First token is a directive.
+            // First token is a directive : END.
             else if(directive)
             {
-                directiveTmp.setName(lineBasedTokens[i]->at(0));
-
-                if(lineBasedTokens[i]->size() == 2)
+                if(lineBasedTokens[i]->at(0) == "END")
                 {
-                    if(directiveTmp.setValue(lineBasedTokens[i]->at(1)))
+                    if(lineBasedTokens[i]->size() == 2)
                     {
-                        if(directiveTmp.getName() == "RESW")
-                            lcTmp += directiveTmp.getValue() * 3;
-                        else if(directiveTmp.getName() == "RESB")
-                            lcTmp += directiveTmp.getValue();
-                        else if(directiveTmp.getName() == "WORD")
-                            lcTmp += *Number::minNumberOfWord(*Number::unsignedHexToDecimal(lineBasedTokens[i]->at(1)));
-                        else if(directiveTmp.getName() == "BYTE")
-                            lcTmp += lineBasedTokens[i]->at(1).length();
+                        lc.push_back(lcTmp);
+                        // Handle lineBasedTokens[i]->at(1) as value or symbol.
                     }
                     else
                     {
-                        cout << "[" << (i+1) << "] Invalid value : " << lineBasedTokens[i]->at(1) << ".\n";
+                        cout << "[Line " << (i+1) << "] Invalid directive : " << lineBasedTokens[i]->at(1) << ". END is expected.\n";
                         exit(0);
                     }
                 }
                 else
                 {
-                    cout << "[" << (i+1) << "] Invalid value : " << lineBasedTokens[i]->at(2) << ". Too many value.\n";
+                    cout << "[Line " << (i+1) << "] Invalid directive : " << lineBasedTokens[i]->at(1) << ". END is expected.\n";
                     exit(0);
                 }
             }
@@ -318,11 +334,17 @@ void AsmCode::generateLc()
             else
             {
                 // Add new symbol to symbol table.
-                if(!symbols.isNameExists(lineBasedTokens[i]->at(0)))
+                if(!symbols.isSymbolExists(lineBasedTokens[i]->at(0)))
                     symbols.addSymbol(lineBasedTokens[i]->at(0));
+                // Duplicate name of symbol.
+                else
+                {
+                    cout << "[Line " << (i+1) << "] Known symbol : " << lineBasedTokens[i]->at(0) << " at " << symbols.getAddress(lineBasedTokens[i]->at(0)) << ".\n";
+                    exit(0);
+                }
 
-                // Set lc as symbol address.
-                symbols.setAddress(lineBasedTokens[i]->at(0), lcTmp);
+                // Set symbol address as the value of lc.
+                symbols.setAddress(lineBasedTokens[i]->at(0), std::to_string(lcTmp));
 
                 // Set lc for this line.
                 lc.push_back(lcTmp);
@@ -333,7 +355,7 @@ void AsmCode::generateLc()
                 // Second token is a instruction.
                 if(opcode != "")
                 {
-                    // Handle instruction and operands.
+                    // Handle instruction and operands as values or symbols.
 
                     lcTmp += 3;
                 }
@@ -342,35 +364,73 @@ void AsmCode::generateLc()
                 {
                     directiveTmp.setName(lineBasedTokens[i]->at(1));
 
+                    // Three fields : symbol, directive, and value.
                     if(lineBasedTokens[i]->size() == 3)
                     {
                         if(directiveTmp.setValue(lineBasedTokens[i]->at(2)))
                         {
-                            if(directiveTmp.getName() == "RESW")
-                                lcTmp += directiveTmp.getValue() * 3;
-                            else if(directiveTmp.getName() == "RESB")
-                                lcTmp += directiveTmp.getValue();
+                            if(directiveTmp.getName() == "BYTE")
+                            {
+                                if(directiveTmp.getType() == DirectiveType::dec)
+                                    lcTmp += Number::minLengthOfByte(Number::toInteger(directiveTmp.getValue())) * 3;
+                                else if(directiveTmp.getType() == DirectiveType::hex)
+                                    lcTmp += (directiveTmp.getValue().length() + 1) / 2;
+                                else  // Ascii.
+                                    lcTmp += directiveTmp.getValue().length();
+                            }
                             else if(directiveTmp.getName() == "WORD")
-                                lcTmp += *Number::minNumberOfWord(*Number::unsignedHexToDecimal(lineBasedTokens[i]->at(2)));
-                            else if(directiveTmp.getName() == "BYTE")
-                                lcTmp += lineBasedTokens[i]->at(2).length();
+                                lcTmp += Number::minLengthOfWord(Number::toInteger(directiveTmp.getValue())) * 3;
+                            else if(directiveTmp.getName() == "RESB")
+                                lcTmp += Number::toInteger(directiveTmp.getValue());
+                            else if(directiveTmp.getName() == "RESW")
+                                lcTmp += Number::toInteger(directiveTmp.getValue()) * 3;
+                            else if(directiveTmp.getName() == "START")
+                            {
+                                if(lineBasedTokens[i]->size() == 3)
+                                {
+                                    if(Number::isHex(lineBasedTokens[i]->at(2)))
+                                        lcTmp = Number::unsignedHexToDecimal(lineBasedTokens[i]->at(2));
+                                    else
+                                    {
+                                        cout << "[Line " << (i+1) << "] Invalid value : " << lineBasedTokens[i]->at(2) << ". A nature number is expected\n";
+                                        exit(0);
+                                    }
+                                }
+                                else
+                                {
+                                    cout << "[Line " << (i+1) << "] Missing value after START.\n";
+                                    exit(0);
+                                }
+                            }
+                            else  // END.
+                            {
+                                cout << "[Line " << (i+1) << "] Syntax error : a phrase " << directiveTmp.getValue() << " before END.\n";
+                                exit(0);
+                            }
                         }
                         else
                         {
-                            cout << "[" << (i+1) << "] Invalid value : " << lineBasedTokens[i]->at(2) << ".\n";
+                            cout << "[Line " << (i+1) << "] Invalid value : " << lineBasedTokens[i]->at(2) << " followed by " << directiveTmp.getName() << ".\n";
                             exit(0);
                         }
                     }
+                    // Too less fields.
+                    else if(lineBasedTokens[i]->size() == 2)
+                    {
+                        cout << "[Line " << (i+1) << "] No phrase after " << lineBasedTokens[i]->at(1) << ".\n";
+                        exit(0);
+                    }
+                    // Too many fields.
                     else
                     {
-                        cout << "[" << (i+1) << "] Invalid value : " << lineBasedTokens[i]->at(3) << ". Too many value.\n";
+                        cout << "[Line " << (i+1) << "] Invalid value : " << lineBasedTokens[i]->at(3) << ". Too many value.\n";
                         exit(0);
                     }
                 }
                 // Second token is invalid.
                 else
                 {
-                    cout << "[" << (i+1) << "] Invalid value : " << lineBasedTokens[i]->at(1) << ". An instruction or directive required.\n";
+                    cout << "[Line " << (i+1) << "] Invalid phrase : " << lineBasedTokens[i]->at(1) << ". An instruction or directive required.\n";
                     exit(0);
                 }
             }

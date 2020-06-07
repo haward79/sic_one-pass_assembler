@@ -1,6 +1,8 @@
+#include <stdio.h>
 #include <iostream>
 #include <string>
 #include "AsmCode.h"
+#include "Number.h"
 
 using std::cout;
 using std::string;
@@ -27,16 +29,19 @@ int main(int countArg, char** args)
     // Read source code.
     code->read(string(arguments[0]) + ".asm");
 
-    // Print line based source code.
+    // Print lc.
     for(int i=0, sizeI=code->getLineBasedTokenLength(); i<sizeI; ++i)
     {
-        cout << "[" << i << "]";
-        
-        for(int j=0, sizeJ=code->getLineBasedTokenLineLength(i); j<sizeJ; ++j)
-            cout << " " << code->getLineBasedToken(i, j);
-
-        cout << "\n";
+        if(code->getLc(i) >= 0)
+            printf("[%2d]  %s  %4d\t%s\n", i, Number::decimalToHex(code->getLc(i), 5).c_str(), code->getLc(i), code->getSourceCode()[i].c_str());
+        else
+            printf("[%2d]  %s  %s\t%s\n", i, "     ", "    ", code->getSourceCode()[i].c_str());
     }
+
+    cout << "\n";
+
+    // Release object.
+    delete code;
 
     return 0;
 }

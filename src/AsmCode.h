@@ -18,6 +18,9 @@
     public:
         // Constructure.
         AsmCode();
+        
+        // Destructor.
+        ~AsmCode();
 
         // Method.
         const vector<string> getSourceCode() const { return sourceCode; }
@@ -27,6 +30,7 @@
         const int getLineBasedTokenLength() const { return lineBasedTokens.size(); }
         const int getLineBasedTokenLineLength(int) const;
         const string getLineBasedToken(int, int) const;
+        const int getLc(int) const;
         const bool getIsWindowsFormat() const { return isWindowsFormat; }
         void clearSourceCode();
         void setSourceCode(const vector<string>&);

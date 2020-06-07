@@ -36,6 +36,22 @@ bool Number::isInteger(string str)
     return true;
 }
 
+bool Number::isPositiveInteger(string str)
+{
+    if(isInteger(str) && toInteger(str) > 0)
+        return true;
+    else
+        return false;
+}
+
+bool Number::isNature(string str)
+{
+    if(isInteger(str) && toInteger(str) >= 0)
+        return true;
+    else
+        return false;
+}
+
 bool Number::isLowerAlpha(char ch)
 {
     return (ch >= 'a' && ch <= 'z');
@@ -46,15 +62,38 @@ bool Number::isCapitalAlpha(char ch)
     return (ch >= 'A' && ch <= 'Z');
 }
 
-int* Number::toDigit(char ch)
+bool Number::isHexDigit(char ch)
 {
-    if(isDigit(ch))
-        return new int(ch - '0');
+    if
+    (
+        (ch >= '0' && ch <= '9') ||
+        (ch >= 'A' && ch <= 'F')
+    )
+        return true;
     else
-        return nullptr;
+        return false;
 }
 
-int* Number::toInteger(string str)
+bool Number::isHex(string str)
+{
+    for(int i=0, sizeI=str.length(); i<sizeI; ++i)
+    {
+        if(!isHexDigit(str[i]))
+            return false;
+    }
+
+    return true;
+}
+
+int Number::toDigit(char ch)
+{
+    if(isDigit(ch))
+        return (ch - '0');
+    else
+        return 0;
+}
+
+int Number::toInteger(string str)
 {
     if(isInteger(str))
     {
@@ -71,7 +110,7 @@ int* Number::toInteger(string str)
         }
 
         // Convert number type from string to integer.
-        for(int i=str.length()-1; i>=0; --i)
+        for(int i=0, sizeI=str.length(); i<sizeI; ++i)
         {
             number *= 10;
             number += str[i] - '0';
@@ -79,58 +118,58 @@ int* Number::toInteger(string str)
 
         // Return number type with sign.
         if(isNegative)
-            return new int(-number);
+            return -number;
         else
-            return new int(number);
+            return number;
     }
     else
-        return nullptr;
+        return 0;
 }
 
-char* Number::toHexDigit(int number)
+char Number::toHexDigit(int number)
 {
     if(number == 0)
-        return new char('0');
+        return '0';
     else if(number == 1)
-        return new char('1');
+        return '1';
     else if(number == 2)
-        return new char('2');
+        return '2';
     else if(number == 3)
-        return new char('3');
+        return '3';
     else if(number == 4)
-        return new char('4');
+        return '4';
     else if(number == 5)
-        return new char('5');
+        return '5';
     else if(number == 6)
-        return new char('6');
+        return '6';
     else if(number == 7)
-        return new char('7');
+        return '7';
     else if(number == 8)
-        return new char('8');
+        return '8';
     else if(number == 9)
-        return new char('9');
+        return '9';
     else if(number == 10)
-        return new char('A');
+        return 'A';
     else if(number == 11)
-        return new char('B');
+        return 'B';
     else if(number == 12)
-        return new char('C');
+        return 'C';
     else if(number == 13)
-        return new char('D');
+        return 'D';
     else if(number == 14)
-        return new char('E');
+        return 'E';
     else if(number == 15)
-        return new char('F');
+        return 'F';
     else
-        return nullptr;
+        return '\0';
 }
 
-int* Number::unsignedHexToDecimal(string str)
+int Number::unsignedHexToDecimal(string str)
 {
     int number = 0;
     
     // Check each digit.
-    for(int i=str.length()-1; i>=0; --i)
+    for(int i=0, sizeI=str.length(); i<sizeI; ++i)
     {
         number *= 16;
 
@@ -139,50 +178,38 @@ int* Number::unsignedHexToDecimal(string str)
         else if(isCapitalAlpha(str[i]))
             number += str[i] - 'A' + 10;
         else
-            return nullptr;
+            return 0;
     }
 
-    return new int(number);
+    return number;
 }
 
-string* Number::decimalToHex(int dec, int digit)
+string Number::decimalToHex(int dec, int digit)
 {
-    int kMaxValue = power(2, digit-1) - 1;
-    int kMinValue = -power(2, digit-1);
-    int remainder = 0;
-    string hex = "";
+    stringstream ss;
+    string str;
+    ss << std::hex << dec;
+    str = toUpperHex(ss.str());
 
-    if(dec >= kMinValue && dec <= kMaxValue)
+    if(str.length() == digit)
+        return str;
+    else if(str.length() > digit)
+        return str.substr(str.length()-digit, digit);
+    else
     {
-        if(dec >= 0)
+        for(int i=0, sizeI=digit-str.length(); i<sizeI; ++i)
         {
-            while(dec > 0)
-            {
-                remainder = dec % 16;
-                dec /= 16;
-                hex = to_string(*toHexDigit(remainder)) + hex;
-            }
-
-            if(hex.length() != digit)
-            {
-                for(int i=0, sizeI=digit-hex.length(); i<sizeI; ++i)
-                    hex = "0" + hex;
-            }
-        }
-        else
-        {
-            hex = *decimalToHex(-dec, digit);
-
-            // Undone.
+            if(dec >= 0)
+                str = "0" + str;
+            else
+                str = "F" + str;
         }
 
-        return new string(hex);
+        return str;
     }
-    else  // Overflow.
-        return nullptr;
 }
 
-string* Number::asciiToHex(string str)
+string Number::asciiToHex(string str)
 {
     string hex = "";
 
@@ -194,31 +221,92 @@ string* Number::asciiToHex(string str)
             (str[i] >= 'A' && str[i] <= 'F')
         )
         {
-            hex += *decimalToHex(int(str[i]), 2);
+            hex += decimalToHex(int(str[i]), 2);
         }
         else
-            return nullptr;
+            return "";
     }
 
-    return new string(hex);
+    return hex;
 }
 
-int* Number::minNumberOfWord(int number)
+int Number::minLengthOfByte(int number)
 {
     int count = 1;
+    int tmp = 0;
 
     while(true)
     {
+        tmp = power(2, count*8 - 1);
+
+        // Check overflow.
+        if(tmp < 0)
+            return 0;
+
         if(number >= 0)
         {
-            if(power(2, count*24 - 1) - 1 >= number)
-                return new int(count);
+            if(tmp - 1 >= number)
+                return count;
         }
         else
         {
-            if(power(2, count*24 - 1) >= -number)
-                return new int(count);
+            if(tmp >= -number)
+                return count;
         }
     }
+}
+
+int Number::minLengthOfWord(int number)
+{
+    int count = 1;
+    int tmp = 0;
+
+    while(true)
+    {
+        tmp = power(2, count*24 - 1);
+
+        // Check overflow.
+        if(tmp < 0)
+            return 0;
+
+        if(number >= 0)
+        {
+            if(tmp - 1 >= number)
+                return count;
+        }
+        else
+        {
+            if(tmp >= -number)
+                return count;
+        }
+    }
+}
+
+string Number::toUpperHex(string hex)
+{
+    for(int i=0, sizeI=hex.length(); i<sizeI; ++i)
+    {
+        if(hex[i] >= 'a' && hex[i] <= 'z')
+            hex[i] -= 32;
+    }
+
+    if(isHex(hex))
+        return hex;
+    else
+        return "";
+}
+
+string Number::toLowerHex(string hex)
+{
+    if(toUpperHex(hex) == "")
+        return "";
+
+    for(int i=0, sizeI=hex.length(); i<sizeI; ++i)
+    {
+        if(hex[i] >= 'A' && hex[i] <= 'Z')
+            hex[i] += 32;
+    }
+
+    return hex;
 }
 

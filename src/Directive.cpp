@@ -9,6 +9,13 @@ Directive::Directive()
     clear();
 }
 
+Directive::Directive(string name, string value)
+{
+    clear();
+    this->name = setName(name);
+    this->value = setValue(value);
+}
+
 bool Directive::setName(string name)
 {
     if(isDirective(name))
@@ -25,74 +32,126 @@ bool Directive::setValue(string value)
     /*********************************************************
      *  Set value for the specific directive named as name.  *
      *  Validation is applied to value.                      *
+     *  Type is set according to the value.                  *
      *********************************************************/
 
     if(isDirective(name))
     {
         if(name == "START" || name == "END")
         {
-            if(Number::isInteger(value) && *Number::toInteger(value) >= 0)
+            // Value is a hex.
+            if(value.length() > 3 && value[0] == 'X' && value[1] == '\'' && value[value.length()-1] == '\'')
             {
-                this->value = *Number::toInteger(value);
+                value = value.substr(2, value.length()-3);
+                
+                // Valid hex.
+                if(Number::isHex(value))
+                {
+                    this->value = value;
+                    type = hex;
+                    return true;
+                }
+                // Invalid hex.
+                else
+                    return false;
+            }
+            // Value is a dec.
+            else if(Number::isNature(value))
+            {
+                this->value = value;
+                type = dec;
                 return true;
             }
+            // START : invalid value. END : symbol.
             else
-                return false;
+            {
+                // START : invalid value.
+                if(name == "START")
+                    return false;
+                // END : symbol.
+                else
+                {
+                    this->value = value;
+                    type = symbol;
+                    return true;
+                }
+            }
         }
+        // BYTE, WORD, RESB, RESW.
         else
         {
-            if(Number::isInteger(value) && *Number::toInteger(value) > 0)
+            if(name == "BYTE")
             {
-                if(name == "BYTE")
+                // Value is a hex.
+                if(value.length() > 3 && value[0] == 'X' && value[1] == '\'' && value[value.length()-1] == '\'')
                 {
-                    if(value[0] == 'C')
+                    value = value.substr(2, value.length()-3);
+                    
+                    // Valid hex.
+                    if(Number::isHex(value))
                     {
-                        if(value[1] == '\'' && value[value.length()-1] == '\'')
-                            value = value.substr(2, value.length()-3);
-                        else
-                            return false;
-
-                        this->value = *Number::unsignedHexToDecimal(*Number::asciiToHex(value));
+                        this->value = value;
+                        type = hex;
+                        return true;
                     }
-                    else if(value[0] == 'X')
-                    {
-                        if(value[1] == '\'' && value[value.length()-1] == '\'')
-                            value = value.substr(2, value.length()-3);
-                        else
-                            return false;
-
-                        this->value = *Number::unsignedHexToDecimal(value);
-                    }
-                    else if(Number::isInteger(value))
-                        this->value = *Number::toInteger(value);
+                    // Invalid hex.
                     else
                         return false;
                 }
-                else if(name == "WORD")
-                    this->value = *Number::toInteger(value);
-                else  // RESB, RESW.
-                    this->value = *Number::toInteger(value);
+                // Value is a dec.
+                else if(Number::isInteger(value))
+                {
+                    this->value = value;
+                    type = dec;
+                    return true;
+                }
+                // Value is a ascii.
+                else if(value.length() > 3 && value[0] == 'C' && value[1] == '\'' && value[value.length()-1] == '\'')
+                {
+                    value = value.substr(2, value.length()-3);
 
-                return true;
+                    this->value = value;
+                    type = ascii;
+                    return true;
+                }
+                // Invalid value.
+                else
+                    return false;
             }
+            else if(name == "WORD")
+            {
+                if(Number::isInteger(value))
+                {
+                    this->value = value;
+                    type = dec;
+                    return true;
+                }
+                else
+                    return false;
+            }
+            // RESB, RESW.
             else
-                return false;
+            {
+                if(Number::isPositiveInteger(value))
+                {
+                    this->value = value;
+                    type = dec;
+                    return true;
+                }
+                else
+                    return false;
+            }
         }
     }
     else
         return false;
 }
 
-Directive::Directive(string name, string value)
-{
-    setName(name);
-    setValue(value);
-}
-
 void Directive::clear()
 {
     name = "";
-    value = 0;
+    value = "";
+    type = null;
 }
 
 bool Directive::isDirective(string name)

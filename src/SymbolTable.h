@@ -14,26 +14,28 @@
         SymbolTable();
 
         // Accessor.
-        int getAddress(string) const;
-        vector<int>* getReferences(string name) const;
+        int getSize() const { return name.size(); }
+        string getAddress(string) const;
+        int getReferenceSize(string) const;
+        string getReference(string, int) const;
 
         // Mutator.
         bool addSymbol(string);
         bool removeSymbol(string);
-        bool setAddress(string, int);
-        bool addReference(string, int);
-        bool removeReference(string, int);
+        bool setAddress(string, string);
+        bool addReference(string, string);
+        bool removeReference(string, string);
 
         // Method.
         void clear();
-        bool isNameExists(string) const;
-        int clearSymbolWithEmptyReference();
+        bool isSymbolExists(string) const;
+        int clearSymbolWithNoReference();
 
     private:
         // Variable.
         vector<string> name;
-        vector<int> address;
-        vector<vector<int>*> reference;
+        vector<string> address;
+        vector<vector<string>*> reference;
 
         // Method.
         int getNameIndex(string) const;

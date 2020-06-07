@@ -6,6 +6,8 @@
 
     using std::string;
 
+    typedef enum {null, ascii, dec, hex, symbol} DirectiveType;
+
     class Directive
     {
     public:
@@ -15,7 +17,8 @@
 
         // Accessor.
         string getName() const { return name; }
-        int getValue() const { return value; }
+        string getValue() const { return value; }
+        DirectiveType getType() const { return type; }
 
         // Mutator.
         bool setName(string);
@@ -30,7 +33,8 @@
     private:
         // Variable.
         string name;
-        int value;
+        string value;
+        DirectiveType type;
     };
 
 #endif
