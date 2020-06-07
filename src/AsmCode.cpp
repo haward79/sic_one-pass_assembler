@@ -315,6 +315,7 @@ void AsmCode::generateLc()
                 {
                     if(lineBasedTokens[i]->size() == 2)
                     {
+                        lcTmp = -999999999;
                         lc.push_back(lcTmp);
                         // Handle lineBasedTokens[i]->at(1) as value or symbol.
                     }
