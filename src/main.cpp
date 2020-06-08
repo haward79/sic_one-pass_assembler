@@ -32,10 +32,19 @@ int main(int countArg, char** args)
 
     // Write lc to file.
     cout << "> Writing location counter values to file ...\n";
+    
     if(code->writeLc(arguments[0] + ".lst"))
-        cout << "  Writing location counter values to file ... Done\n";
+        cout << "  Writing location counter values to file ... Done\n\n";
     else
         cout << "  Writing location counter values to file ... Failed\n\n";
+
+    // Write symbol table to file.
+    cout << "> Writing symbol table to file ...\n";
+
+    if(code->writeSymbolTable(arguments[0] + ".stb"))
+        cout << "  Writing symbol table to file ... Done\n\n";
+    else
+        cout << "  Writing symbol table to file ... Failed\n\n";
 
     // Release object.
     delete code;

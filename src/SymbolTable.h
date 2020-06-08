@@ -30,6 +30,7 @@
         void clear();
         bool isSymbolExists(string) const;
         int clearSymbolWithNoReference();
+        string getIndexName(int) const;
 
     private:
         // Variable.

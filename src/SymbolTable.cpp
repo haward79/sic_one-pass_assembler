@@ -168,6 +168,14 @@ int SymbolTable::clearSymbolWithNoReference()
     return count;
 }
 
+string SymbolTable::getIndexName(int index) const
+{
+    if(index >=0 && index < name.size())
+        return name[index];
+    else
+        return "";
+}
+
 
 
 /*******************************

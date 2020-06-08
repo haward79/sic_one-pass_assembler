@@ -192,6 +192,7 @@ void AsmCode::clearSourceCode()
     lineBasedTokens.clear();
     tokens.clear();
     lc.clear();
+    symbols.clear();
     isWindowsFormat = false;
     codeLength = 0;
 }
@@ -277,6 +278,37 @@ bool AsmCode::writeLc(const string filePath) const
     }
 }
 
+bool AsmCode::writeSymbolTable(const string filePath) const
+{
+    ofstream fout;
+    string symbolName = "";
+
+    // Open output file stream.
+    fout.open(filePath);
+
+    // Failure.
+    if(fout.fail())
+        return false;
+    // Success.
+    else
+    {
+        // Write title.
+        fout << "Symbol\tValue\n";
+        fout << "======\t======\n";
+
+        // Write content.
+        for(int i=0, sizeI=symbols.getSize(); i<sizeI; ++i)
+        {
+            symbolName = symbols.getIndexName(i);
+
+            fout << symbolName << "\t" << Number::decimalToHex(Number::toInteger(symbols.getAddress(symbolName)), 5) << "\n";
+        }
+
+        // Close output file stream.
+        fout.close();
+    }
+}
+
 
 
 /*******************************
@@ -323,10 +355,7 @@ void AsmCode::generateLc()
     int lcTmp = -999999999;
     string opcode = "";
     bool directive = false;
-    SymbolTable symbols;
     Directive directiveTmp;
-
-    symbols.clear();
 
     for(int i=0, sizeI=getLineBasedTokenLength(); i<sizeI; ++i)
     {
@@ -426,7 +455,10 @@ void AsmCode::generateLc()
                                 if(lineBasedTokens[i]->size() == 3)
                                 {
                                     if(Number::isHex(lineBasedTokens[i]->at(2)))
+                                    {
                                         lcTmp = Number::unsignedHexToDecimal(lineBasedTokens[i]->at(2));
+                                        symbols.setAddress(lineBasedTokens[i]->at(0), to_string(lcTmp));
+                                    }
                                     else
                                     {
                                         cout << "[Line " << (i+1) << "] Invalid value : " << lineBasedTokens[i]->at(2) << ". A nature number is expected\n";

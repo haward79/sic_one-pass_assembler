@@ -37,7 +37,8 @@
         void clearSourceCode();
         void setSourceCode(const vector<string>&);
         void read(const string&);
-        bool writeLc(string) const;
+        bool writeLc(const string) const;
+        bool writeSymbolTable(const string) const;
 
     private:
         // Variable.
@@ -45,6 +46,7 @@
         vector<vector<string>*> lineBasedTokens;
         vector<string> tokens;
         vector<int> lc;
+        SymbolTable symbols;
         bool isWindowsFormat;
         int codeLength;
 
