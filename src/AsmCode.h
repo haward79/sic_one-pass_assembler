@@ -25,6 +25,7 @@
         ~AsmCode();
 
         // Method.
+        const string getFileName() const { return fileName; }
         const vector<string> getSourceCode() const { return sourceCode; }
         const int getTokenLength() const { return tokens.size(); }
         const vector<string> getTokens() const { return tokens; }
@@ -36,12 +37,13 @@
         const bool getIsWindowsFormat() const { return isWindowsFormat; }
         void clearSourceCode();
         void setSourceCode(const vector<string>&);
-        void read(const string&);
-        bool writeLc(const string) const;
-        bool writeSymbolTable(const string) const;
+        bool read(const string&);
+        bool writeLc() const;
+        bool writeSymbolTable() const;
 
     private:
         // Variable.
+        string fileName;
         vector<string> sourceCode;
         vector<vector<string>*> lineBasedTokens;
         vector<string> tokens;

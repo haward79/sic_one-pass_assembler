@@ -27,24 +27,36 @@ int main(int countArg, char** args)
 
     // Read source code.
     cout << "> Parsing source code ...\n";
-    code->read(string(arguments[0]) + ".asm");
-    cout << "  Parsing source code ... Done\n\n";
+
+    if(code->read(string(arguments[0]) + ".asm"));
+        cout << "  Parsing source code ... Done\n\n";
+    else
+    {
+        cout << "  Parsing source code ... Failed\n\n";
+        exit(0);
+    }
 
     // Write lc to file.
     cout << "> Writing location counter values to file ...\n";
     
-    if(code->writeLc(arguments[0] + ".lst"))
+    if(code->writeLc())
         cout << "  Writing location counter values to file ... Done\n\n";
     else
+    {
         cout << "  Writing location counter values to file ... Failed\n\n";
+        exit(0);
+    }
 
     // Write symbol table to file.
     cout << "> Writing symbol table to file ...\n";
 
-    if(code->writeSymbolTable(arguments[0] + ".stb"))
+    if(code->writeSymbolTable())
         cout << "  Writing symbol table to file ... Done\n\n";
     else
+    {
         cout << "  Writing symbol table to file ... Failed\n\n";
+        exit(0);
+    }
 
     // Release object.
     delete code;

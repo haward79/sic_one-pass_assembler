@@ -129,6 +129,7 @@ string getOpcodeStr(string mnemonic)
 // Constructure.
 AsmCode::AsmCode()
 {
+    fileName = "";
     clearSourceCode();
 }
 
@@ -203,7 +204,7 @@ void AsmCode::setSourceCode(const vector<string>& src)
     splitTokens();
 }
 
-void AsmCode::read(const string& filePath)
+bool AsmCode::read(const string& filePath)
 {
     string tmp = "";
     ifstream& fin = *(new ifstream());
@@ -215,8 +216,11 @@ void AsmCode::read(const string& filePath)
     if(fin.fail())
     {
         cout << "Fatal error : failed to open file \"" << filePath << "\".\n";
-        return ;
+        return false;
     }
+
+    // Set filename.
+    fileName = filePath;
 
     // Read source code from file.
     while(getline(fin, tmp))
@@ -240,14 +244,16 @@ void AsmCode::read(const string& filePath)
 
     splitTokens();
     generateLc();
+
+    return true;
 }
 
-bool AsmCode::writeLc(const string filePath) const
+bool AsmCode::writeLc() const
 {
     ofstream fout;
 
     // Open output file stream.
-    fout.open(filePath);
+    fout.open(fileName + ".lst");
 
     // Failure.
     if(fout.fail())
@@ -278,13 +284,13 @@ bool AsmCode::writeLc(const string filePath) const
     }
 }
 
-bool AsmCode::writeSymbolTable(const string filePath) const
+bool AsmCode::writeSymbolTable() const
 {
     ofstream fout;
     string symbolName = "";
 
     // Open output file stream.
-    fout.open(filePath);
+    fout.open(fileName + "stb");
 
     // Failure.
     if(fout.fail())
