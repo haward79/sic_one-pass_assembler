@@ -8,6 +8,7 @@
     #include <fstream>
     #include "SymbolTable.h"
     #include "Directive.h"
+    #include "ObjectCode.h"
 
     using std::cout;
     using std::string;
@@ -40,6 +41,7 @@
         bool read(const string&);
         bool writeLc() const;
         bool writeSymbolTable() const;
+        bool writeObjectCode() const;
 
     private:
         // Variable.
@@ -50,7 +52,7 @@
         vector<int> lc;
         SymbolTable symbols;
         bool isWindowsFormat;
-        int codeLength;
+        ObjectCode objCode;
 
         // Method.
         void splitTokens();

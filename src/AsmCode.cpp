@@ -195,7 +195,7 @@ void AsmCode::clearSourceCode()
     lc.clear();
     symbols.clear();
     isWindowsFormat = false;
-    codeLength = 0;
+    objCode.clear();
 }
 
 void AsmCode::setSourceCode(const vector<string>& src)
@@ -210,12 +210,12 @@ bool AsmCode::read(const string& filePath)
     ifstream& fin = *(new ifstream());
 
     // Open source code file.
-    fin.open(filePath);
+    fin.open(filePath + ".asm");
 
     // Failed.
     if(fin.fail())
     {
-        cout << "Fatal error : failed to open file \"" << filePath << "\".\n";
+        cout << "Fatal error : failed to open file \"" << filePath << ".asm\".\n";
         return false;
     }
 
@@ -290,7 +290,7 @@ bool AsmCode::writeSymbolTable() const
     string symbolName = "";
 
     // Open output file stream.
-    fout.open(fileName + "stb");
+    fout.open(fileName + ".stb");
 
     // Failure.
     if(fout.fail())
@@ -311,6 +311,23 @@ bool AsmCode::writeSymbolTable() const
         }
 
         // Close output file stream.
+        fout.close();
+    }
+}
+
+bool AsmCode::writeObjectCode() const
+{
+    ofstream fout;
+
+    fout.open(fileName + ".obj");
+
+    if(fout.fail())
+        return false;
+    else
+    {
+        fout << "H" << objCode.getName() << Number::decimalToHex(objCode.getBaseAddress(), 6) << Number::decimalToHex(objCode.getLength(), 6) << "\n";
+        fout << "E" << Number::decimalToHex(objCode.getStartAddress(), 6) << "\n";
+
         fout.close();
     }
 }
@@ -386,9 +403,21 @@ void AsmCode::generateLc()
                 {
                     if(lineBasedTokens[i]->size() == 2)
                     {
+                        objCode.setLength(lcTmp - objCode.getBaseAddress());
+
                         lcTmp = -999999999;
                         lc.push_back(lcTmp);
+                        
                         // Handle lineBasedTokens[i]->at(1) as value or symbol.
+                        if(Number::isNature(lineBasedTokens[i]->at(1)))
+                            objCode.setStartAddress(Number::toInteger(lineBasedTokens[i]->at(1)));
+                        else if(symbols.getAddress(lineBasedTokens[i]->at(1)) != "")
+                            objCode.setStartAddress(Number::toInteger(symbols.getAddress(lineBasedTokens[i]->at(1))));
+                        else
+                        {
+                            cout << "[Line " << (i+1) << "] Invalid phrase : " << lineBasedTokens[i]->at(1) << ". Not a value or symbol.\n";
+                            exit(0);
+                        }
                     }
                     else
                     {
@@ -460,10 +489,14 @@ void AsmCode::generateLc()
                             {
                                 if(lineBasedTokens[i]->size() == 3)
                                 {
+                                    if(!objCode.setName(lineBasedTokens[i]->at(0)))
+                                        cout << "[Line " << (i+1) << "] Too long name of the program : " << lineBasedTokens[i]->at(2) << "\n";
+
                                     if(Number::isHex(lineBasedTokens[i]->at(2)))
                                     {
                                         lcTmp = Number::unsignedHexToDecimal(lineBasedTokens[i]->at(2));
                                         symbols.setAddress(lineBasedTokens[i]->at(0), to_string(lcTmp));
+                                        objCode.setBaseAddress(lcTmp);
                                     }
                                     else
                                     {
