@@ -35,7 +35,7 @@
     private:
         // Variable.
         vector<string> name;
-        vector<string> address;
+        vector<string> address;  // Decimal.
         vector<vector<string>*> reference;
 
         // Method.

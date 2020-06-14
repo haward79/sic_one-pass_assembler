@@ -57,6 +57,11 @@
         // Method.
         void splitTokens();
         void generateLc();
+        bool isSeperator(char);
+        vector<string>* explode(const string&);
+        string getOpcodeStr(string);
+        bool splitTextRecord(int, int, int);
+        int getTypeCode(int);
     };
 
 #endif

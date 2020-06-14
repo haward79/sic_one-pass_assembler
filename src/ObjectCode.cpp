@@ -1,8 +1,46 @@
 #include "ObjectCode.h"
 
-/******************************
- *  Public members in class.  *
- ******************************/
+/***********************************
+ *  Public members in TextRecord.  *
+ ***********************************/
+
+// Constructor.
+TextRecord::TextRecord()
+{
+    clear();
+}
+
+// Mutator.
+bool TextRecord::setStartAddress(int startAddress)
+{
+    if(startAddress >= 0)
+    {
+        this->startAddress = startAddress;
+        return true;
+    }
+    else
+        return false;
+}
+
+void TextRecord::appendRecord(const string record)
+{
+    this->record += record;
+    length += record.length() / 2;  // Unit : byte.
+}
+
+// Method.
+void TextRecord::clear()
+{
+    startAddress = -1;
+    length = 0;
+    record = "";
+}
+
+
+
+/***********************************
+ *  Public members in ObjectCode.  *
+ ***********************************/
 
 // Constructor.
 ObjectCode::ObjectCode()
@@ -10,9 +48,16 @@ ObjectCode::ObjectCode()
     clear();
 }
 
-/*******************************
- *  Private members in class.  *
- *******************************/
+// Accessor.
+TextRecord* ObjectCode::getTextRecord(int index) const
+{
+    if(index >= 0 && index < textRecords.size())
+        return textRecords[index];
+    else if(-index >= 1 && -index <= textRecords.size())
+        return textRecords[textRecords.size()+index];
+    else
+        return nullptr;
+}
 
 // Mutator.
 bool ObjectCode::setName(const string name)
@@ -70,6 +115,36 @@ bool ObjectCode::setStartAddress(int startAddress)
         return false;
 }
 
+bool ObjectCode::appendPartialToRecord(const string partial, int index)
+{
+    if(index >= 0 && index < textRecords.size())
+    {
+        textRecords[index]->appendRecord(partial);
+        return true;
+    }
+    else
+        return false;
+}
+
+void ObjectCode::appendPartialToLastRecord(const string partial)
+{
+    // Record list is NOT empty.  Append partial to last record in the list.
+    if(textRecords.size() > 0)
+        textRecords[textRecords.size()-1]->appendRecord(partial);
+    // Record list is empty.  Create a new record.
+    else
+    {
+        addRecord();
+        textRecords[0]->appendRecord(partial);
+    }
+}
+
+void ObjectCode::addRecord()
+{
+    ++length;
+    textRecords.push_back(new TextRecord);
+}
+
 // Methods.
 void ObjectCode::clear()
 {
@@ -77,5 +152,6 @@ void ObjectCode::clear()
     baseAddress = 0;
     length = 0;
     startAddress = 0;
+    textRecords.clear();
 }
 

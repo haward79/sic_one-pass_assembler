@@ -218,7 +218,8 @@ string Number::asciiToHex(string str)
         if
         (
             (str[i] >= '0' && str[i] <= '9') ||
-            (str[i] >= 'A' && str[i] <= 'F')
+            (str[i] >= 'A' && str[i] <= 'Z') ||
+            (str[i] >= 'a' && str[i] <= 'z')
         )
         {
             hex += decimalToHex(int(str[i]), 2);
