@@ -271,7 +271,7 @@ void AsmCode::generateLc()
 {
     int lcTmp = -999999999;
     string opcode = "", address = "";
-    bool directive = false;
+    bool directive = false, isNewSymbolDefined = false;
     Directive directiveTmp;
 
     for(int i=0, sizeI=getLineBasedTokenLength(); i<sizeI; ++i)
@@ -332,7 +332,7 @@ void AsmCode::generateLc()
                                     }
                                 }
 
-                                symbols.addReference(lineBasedTokens[i]->at(1), to_string(lc[lc.size()]));
+                                symbols.addReference(lineBasedTokens[i]->at(1), to_string(lc[lc.size()-1]));
                             }
                             // Symbol defined.
                             else
@@ -361,7 +361,7 @@ void AsmCode::generateLc()
 
                             // Stuff zeros and add current lc to reference list.
                             objCode.appendPartialToLastRecord(opcode + "0000");
-                            symbols.addReference(lineBasedTokens[i]->at(1), to_string(lc[lc.size()]));
+                            symbols.addReference(lineBasedTokens[i]->at(1), to_string(lc[lc.size()-1]));
                         }
                     }
                 }
@@ -407,6 +407,9 @@ void AsmCode::generateLc()
                 // Add new symbol to symbol table.
                 if(!symbols.isSymbolExists(lineBasedTokens[i]->at(0)))
                     symbols.addSymbol(lineBasedTokens[i]->at(0));
+                // Mark new symbol defined flag.
+                else
+                    isNewSymbolDefined = true;
                 
                 // Duplicate name of symbol.
                 if(symbols.getAddress(lineBasedTokens[i]->at(0)) != "")
@@ -427,6 +430,24 @@ void AsmCode::generateLc()
                 // Second token is a instruction.
                 if(opcode != "")
                 {
+                    // Check forward reference : code label.
+                    if(isNewSymbolDefined)
+                    {
+                        string addr = Number::decimalToHex(Number::toInteger(symbols.getAddress(lineBasedTokens[i]->at(0))), 4);
+
+                        for(int j=0, sizeJ=symbols.getReferenceSize(lineBasedTokens[i]->at(0)); j<sizeJ; ++j)
+                        {
+                            objCode.addRecord();
+                            objCode.getTextRecord(-1)->setStartAddress(Number::toInteger(symbols.getReference(lineBasedTokens[i]->at(0), j)) + 1);
+                            objCode.appendPartialToLastRecord(addr);
+                        }
+
+                        objCode.addRecord();
+                        objCode.getTextRecord(-1)->setStartAddress(lcTmp);
+
+                        isNewSymbolDefined = false;
+                    }
+
                     // Instruction is RSUB. (0 operand)
                     if(lineBasedTokens[i]->at(1) == "RSUB")
                         objCode.appendPartialToLastRecord(opcode + "0000");
@@ -466,7 +487,7 @@ void AsmCode::generateLc()
                                         }
                                     }
 
-                                    symbols.addReference(lineBasedTokens[i]->at(2), to_string(lc[lc.size()]));
+                                    symbols.addReference(lineBasedTokens[i]->at(2), to_string(lc[lc.size()-1]));
                                 }
                                 // Symbol defined.
                                 else
@@ -495,7 +516,7 @@ void AsmCode::generateLc()
 
                                 // Stuff zeros and add current lc to reference list.
                                 objCode.appendPartialToLastRecord(opcode + "0000");
-                                symbols.addReference(lineBasedTokens[i]->at(2), to_string(lc[lc.size()]));
+                                symbols.addReference(lineBasedTokens[i]->at(2), to_string(lc[lc.size()-1]));
                             }
                         }
                     }
@@ -505,6 +526,33 @@ void AsmCode::generateLc()
                 // Second token is a directive.
                 else if(directive)
                 {
+                    // Check forward reference : data label.
+                    if
+                    (
+                        isNewSymbolDefined &&
+                        (
+                            lineBasedTokens[i]->at(1) == "BYTE" ||
+                            lineBasedTokens[i]->at(1) == "WORD" ||
+                            lineBasedTokens[i]->at(1) == "RESB" ||
+                            lineBasedTokens[i]->at(1) == "RESW"
+                        )
+                    )
+                    {
+                        string content = Number::decimalToHex(Number::toInteger(symbols.getAddress(lineBasedTokens[i]->at(0))), 4);
+
+                        for(int j=0, sizeJ=symbols.getReferenceSize(lineBasedTokens[i]->at(0)); j<sizeJ; ++j)
+                        {
+                            objCode.addRecord();
+                            objCode.getTextRecord(-1)->setStartAddress(Number::toInteger(symbols.getReference(lineBasedTokens[i]->at(0), j)) + 1);
+                            objCode.appendPartialToLastRecord(content);
+                        }
+
+                        objCode.addRecord();
+                        objCode.getTextRecord(-1)->setStartAddress(lcTmp);
+
+                        isNewSymbolDefined = false;
+                    }
+
                     directiveTmp.setName(lineBasedTokens[i]->at(1));
 
                     // Three fields : symbol, directive, and value.
@@ -514,15 +562,19 @@ void AsmCode::generateLc()
                         {
                             if(directiveTmp.getName() == "BYTE")
                             {
+                                int len = 0;
+
                                 if(directiveTmp.getType() == DirectiveType::dec)
                                 {
-                                    lcTmp += Number::minLengthOfByte(Number::toInteger(directiveTmp.getValue())) * 3;
-                                    objCode.appendPartialToLastRecord(Number::decimalToHex(Number::toInteger(directiveTmp.getValue()), 6));
+                                    len = Number::minLengthOfByte(Number::toInteger(directiveTmp.getValue()));
+                                    lcTmp += len;
+                                    objCode.appendPartialToLastRecord(Number::decimalToHex(Number::toInteger(directiveTmp.getValue()), len));
                                 }
                                 else if(directiveTmp.getType() == DirectiveType::hex)
                                 {
-                                    lcTmp += (directiveTmp.getValue().length() + 1) / 2;
-                                    objCode.appendPartialToLastRecord(Number::decimalToHex(Number::unsignedHexToDecimal(directiveTmp.getValue()), 6));
+                                    len = (directiveTmp.getValue().length() + 1) / 2;  // Unit : byte.
+                                    lcTmp += len;
+                                    objCode.appendPartialToLastRecord(Number::decimalToHex(Number::unsignedHexToDecimal(directiveTmp.getValue()), len * 2));
                                 }
                                 else  // Ascii.
                                 {
