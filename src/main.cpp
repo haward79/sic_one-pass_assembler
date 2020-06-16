@@ -32,19 +32,28 @@ int main(int countArg, char** args)
     // Read source code.
     code = readSourceCode(string(arguments[0]));
 
+    // Print source code line-break.
+    if(code->getIsWindowsFormat())
+        cout << "> Input source code is written on ... Windows\n\n";
+    else
+        cout << "> Input source code is written on ... Linux or Unix\n\n";
+
     if(code == nullptr)
         return 1;
 
     // Write lc to file.
-    writeLc(code);
+    if(arguments[1] == "-s" || arguments[1] == "-a")
+        writeLc(code);
 
     // Write symbol table to file.
-    writeSymbolTable(code);
+    if(arguments[1] == "-t" || arguments[1] == "-a")
+        writeSymbolTable(code);
 
     // Write object code to file.
     writeObjectCode(code);
 
     // Release object.
+    delete &arguments;
     delete code;
 
     return 0;
@@ -74,7 +83,7 @@ vector<string>& readArguments(int countArg, char** args)
 
     if(countArg == 3)
     {
-        if(args[2] != "-s" && args[2] != "-t" && args[2] != "-a")
+        if(args[2] != string("-s") && args[2] != string("-t") && args[2] != string("-a"))
         {
             cout << "Invalid argument : " << args[2] << "\n";
             exit(1);
@@ -82,6 +91,8 @@ vector<string>& readArguments(int countArg, char** args)
 
         arguments.push_back(args[2]);
     }
+    else
+        arguments.push_back("");
 
     return arguments;
 }
