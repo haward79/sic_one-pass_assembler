@@ -276,11 +276,6 @@ void AsmCode::generateLc()
 
     for(int i=0, sizeI=getLineBasedTokenLength(); i<sizeI; ++i)
     {
-        if(i == 10)
-        {
-            cout << "";
-        }
-
         // This line is NOT a comment.
         if(lineBasedTokens[i]->at(0)[0] != '.')
         {
