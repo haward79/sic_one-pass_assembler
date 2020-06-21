@@ -1,3 +1,13 @@
+/*********************************************
+ *                                           *
+ *    Author  : haward79                     *
+ *    Contact : haward79@yahoo.com.tw        *
+ *    Website : https://www.haward79.tw/     *
+ *              https://www.taiwancan.tw/    *
+ *                                           *
+ *                                           *
+ *********************************************/
+
 #include <iostream>
 #include <string>
 #include "AsmCode.h"
@@ -73,16 +83,20 @@ vector<string>& readArguments(int countArg, char** args)
 
     vector<string>& arguments = *(new vector<string>);
     
+    // Check number of arguments.
     if(countArg < 2 || countArg > 3)
     {
         cout << "Incorrect number of argument(s).\n";
         exit(1);
     }
 
+    // Add file name to argument list.
     arguments.push_back(args[1]);
 
+    // Add parameter to argument list.
     if(countArg == 3)
     {
+        // Validate parameter.
         if(args[2] != string("-s") && args[2] != string("-t") && args[2] != string("-a"))
         {
             cout << "Invalid argument : " << args[2] << "\n";
@@ -99,6 +113,7 @@ vector<string>& readArguments(int countArg, char** args)
 
 AsmCode* readSourceCode(const string fileName)
 {
+    // Filename is empty.
     if(fileName == "")
     {
         cout << "  File name is empty !\n";
